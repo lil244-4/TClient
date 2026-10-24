@@ -567,7 +567,33 @@ int CGameClient::OnSnapInput(int *pData, bool Dummy, bool Force)
 			m_DummyInput.m_Fire = (m_HammerInput.m_Fire + 1) & ~1;
 			m_DummyFire = 0;
 		}
-
+		static bool s_HookMeActive = false;
+		static int s_SavedTargetX = 0, s_SavedTargetY = 0, s_SavedHook = 0;
+		const bool HookMe = g_Config.m_ClDummyHookMe && g_Config.m_ClDummyHook;
+		if(HookMe)
+		{
+			if(!s_HookMeActive)
+			{
+				s_SavedTargetX = m_DummyInput.m_TargetX;
+				s_SavedTargetY = m_DummyInput.m_TargetY;
+				s_SavedHook = m_DummyInput.m_Hook;
+				s_HookMeActive = true;
+			}
+			const vec2 Dir = m_LocalCharacterPos - m_aClients[m_aLocalIds[!g_Config.m_ClDummy]].m_Predicted.m_Pos;
+			m_DummyInput.m_TargetX = (int)Dir.x;
+			m_DummyInput.m_TargetY = (int)Dir.y;
+			if(!m_DummyInput.m_TargetX && !m_DummyInput.m_TargetY)
+				m_DummyInput.m_TargetX = 1;
+			m_DummyInput.m_Hook = 1;
+		}
+		else if(s_HookMeActive)
+		{
+			m_DummyInput.m_TargetX = s_SavedTargetX;
+			m_DummyInput.m_TargetY = s_SavedTargetY;
+			m_DummyInput.m_Hook = g_Config.m_ClDummyCopyMoves ? m_DummyInput.m_Hook : s_SavedHook;
+			s_HookMeActive = false;
+			Force = true;
+		}
 		if(!Force && (!m_DummyInput.m_Direction && !m_DummyInput.m_Jump && !m_DummyInput.m_Hook))
 		{
 			return 0;
