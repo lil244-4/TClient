@@ -12,3 +12,4 @@ bind lctrl "+toggle cl_dummy_hook 1 0"
 ```
 
 Only two files are changed: `src/engine/shared/config_variables.h` and `src/game/client/gameclient.cpp`. Meant for fun on your own server, not for ranked times.
+Windows builds come from this fork's GitHub Actions (Build workflow, windows-latest artifact).
