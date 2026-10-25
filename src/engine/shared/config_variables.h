@@ -320,6 +320,7 @@ MACRO_CONFIG_INT(ClVideoX264Preset, cl_video_preset, 5, 0, 9, CFGFLAG_CLIENT | C
 
 // debug
 MACRO_CONFIG_INT(DbgDummies, dbg_dummies, 0, 0, SERVER_MAX_CLIENTS, CFGFLAG_SERVER, "Add debug dummies to server")
+MACRO_CONFIG_INT(DbgDummiesCopy, dbg_dummies_copy, -1, -1, SERVER_MAX_CLIENTS - 1, CFGFLAG_SERVER, "Client ID the debug dummies copy inputs from (-1 = stand still)")
 
 MACRO_CONFIG_INT(DbgTuning, dbg_tuning, 0, 0, 2, CFGFLAG_CLIENT, "Display information about the tuning parameters that affect the own player (0 = off, 1 = show changed, 2 = show all)")
 
