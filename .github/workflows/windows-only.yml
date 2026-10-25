@@ -1,0 +1,35 @@
+# Builds only the Windows version (client + server), started by hand.
+name: Windows build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        submodules: recursive
+
+    - name: Install Vulkan SDK
+      uses: humbletim/install-vulkan-sdk@v1.2
+      with:
+        version: 1.3.296.0
+        cache: true
+
+    - name: Build release
+      run: |
+        mkdir release
+        cd release
+        cmake -A x64 -DEXCEPTION_HANDLING=ON -DVULKAN=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=. ..
+        cmake --build . --config Release --target everything
+        cmake --build . --config Release --target package_default
+        mkdir artifacts
+        Move-Item *-win64.zip artifacts
+
+    - name: Upload
+      uses: actions/upload-artifact@v6
+      with:
+        name: tclient-hookme-windows
+        path: release/artifacts
