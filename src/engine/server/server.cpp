@@ -3293,7 +3293,7 @@ void CServer::UpdateDebugDummies(bool ForceDisconnect)
 		if(AddDummy && Client.m_DebugDummy)
 		{
 			CNetObj_PlayerInput Input = {0};
-			Input.m_Direction = (ClientId & 1) ? -1 : 1;
+			Input.m_Direction = 0; // stand still
 			Client.m_aInputs[0].m_GameTick = Tick() + 1;
 			mem_copy(Client.m_aInputs[0].m_aData, &Input, std::min(sizeof(Input), sizeof(Client.m_aInputs[0].m_aData)));
 			Client.m_LatestInput = Client.m_aInputs[0];
@@ -3530,6 +3530,48 @@ int CServer::Run()
 			{
 				GameServer()->OnPreTickTeehistorian();
 				UpdateDebugDummies(false);
+
+				// dbg_dummies_copy: debug dummies copy one player's inputs
+				static int s_PrevDummiesCopy = -1;
+				if(g_Config.m_DbgDummiesCopy < 0 && s_PrevDummiesCopy >= 0)
+				{
+					// copying switched off: make the dummies stand still again
+					for(auto &Dummy : m_aClients)
+					{
+						if(!Dummy.m_DebugDummy || Dummy.m_State != CClient::STATE_INGAME)
+							continue;
+						CNetObj_PlayerInput StillInput = {0};
+						StillInput.m_TargetX = 1;
+						Dummy.m_aInputs[0].m_GameTick = Tick() + 1;
+						mem_copy(Dummy.m_aInputs[0].m_aData, &StillInput, std::min(sizeof(StillInput), sizeof(Dummy.m_aInputs[0].m_aData)));
+						Dummy.m_LatestInput = Dummy.m_aInputs[0];
+						Dummy.m_CurrentInput = 0;
+					}
+				}
+				s_PrevDummiesCopy = g_Config.m_DbgDummiesCopy;
+				if(g_Config.m_DbgDummiesCopy >= 0 && g_Config.m_DbgDummiesCopy < MAX_CLIENTS &&
+					m_aClients[g_Config.m_DbgDummiesCopy].m_State == CClient::STATE_INGAME &&
+					!m_aClients[g_Config.m_DbgDummiesCopy].m_DebugDummy)
+				{
+					const CClient &Source = m_aClients[g_Config.m_DbgDummiesCopy];
+					for(int Offset = 0; Offset <= 1; Offset++)
+					{
+						for(const auto &SourceInput : Source.m_aInputs)
+						{
+							if(SourceInput.m_GameTick != Tick() + 1 + Offset)
+								continue;
+							for(auto &Dummy : m_aClients)
+							{
+								if(!Dummy.m_DebugDummy || Dummy.m_State != CClient::STATE_INGAME)
+									continue;
+								Dummy.m_aInputs[Offset] = SourceInput;
+								Dummy.m_LatestInput = SourceInput;
+								Dummy.m_CurrentInput = Offset;
+							}
+							break;
+						}
+					}
+				}
 
 				for(int c = 0; c < MAX_CLIENTS; c++)
 				{
